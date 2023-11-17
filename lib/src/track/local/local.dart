@@ -55,6 +55,22 @@ mixin VideoTrack on Track {
   void removeViewKey(GlobalKey key) {
     viewKeys.remove(key);
   }
+
+  @internal
+  Future<void> initRenderer() async {
+    if (renderer != null) return;
+    renderer = rtc.RTCVideoRenderer();
+    await renderer!.initialize();
+  }
+
+  @internal
+  Future<void> closeRenderer() async {
+    if (renderer == null) return;
+    await renderer!.dispose();
+    renderer = null;
+  }
+
+  rtc.RTCVideoRenderer? renderer;
 }
 
 /// Used to group [LocalAudioTrack] and [RemoteAudioTrack].

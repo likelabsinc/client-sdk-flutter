@@ -130,8 +130,8 @@ class RemoteParticipant extends Participant<RemoteTrackPublication> {
     final RemoteTrack track;
     if (pub.kind == lk_models.TrackType.VIDEO) {
       // video track
-      track =
-          RemoteVideoTrack(pub.source, stream, mediaTrack, receiver: receiver);
+      track = await RemoteVideoTrack.create(pub.source, stream, mediaTrack,
+          receiver: receiver);
     } else if (pub.kind == lk_models.TrackType.AUDIO) {
       // audio track
       track =

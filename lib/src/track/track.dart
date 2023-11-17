@@ -26,6 +26,7 @@ import '../managers/event.dart';
 import '../proto/livekit_models.pb.dart' as lk_models;
 import '../support/disposable.dart';
 import '../types/other.dart';
+import 'local/local.dart';
 import 'stats.dart';
 
 /// Wrapper around a MediaStreamTrack with additional metadata.
@@ -73,6 +74,9 @@ abstract class Track extends DisposableChangeNotifier
     onDispose(() async {
       logger.fine('${objectId} onDispose()');
       await stop();
+      if (this is VideoTrack) {
+        await (this as VideoTrack).closeRenderer();
+      }
       // dispose events
       await events.dispose();
     });

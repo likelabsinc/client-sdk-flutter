@@ -50,25 +50,16 @@ class VideoTrackRenderer extends StatefulWidget {
 }
 
 class _VideoTrackRendererState extends State<VideoTrackRenderer> {
-  rtc.RTCVideoRenderer? _renderer;
-  late Future<rtc.RTCVideoRenderer> _rendererFuture;
-
+  rtc.RTCVideoRenderer? get _renderer => widget.track.renderer;
   EventsListener<TrackEvent>? _listener;
   // Used to compute visibility information
   late GlobalKey _internalKey;
-
-  Future<rtc.RTCVideoRenderer> initRenderer() async {
-    _renderer ??= rtc.RTCVideoRenderer();
-    await _renderer?.initialize();
-    await _attach();
-    return _renderer!;
-  }
 
   @override
   void initState() {
     super.initState();
     _internalKey = widget.track.addViewKey();
-    _rendererFuture = initRenderer();
+    _attach();
   }
 
   @override
@@ -76,23 +67,26 @@ class _VideoTrackRendererState extends State<VideoTrackRenderer> {
     widget.track.removeViewKey(_internalKey);
     _listener?.dispose();
     _renderer?.srcObject = null;
-    _renderer?.dispose();
     super.dispose();
   }
 
   Future<void> _attach() async {
-    _renderer?.srcObject = widget.track.mediaStream;
     await _listener?.dispose();
     _listener = widget.track.createListener()
       ..on<TrackStreamUpdatedEvent>((event) {
         if (!mounted) return;
-        _renderer?.srcObject = event.stream;
+        setState(() {
+          _renderer?.srcObject = event.stream;
+        });
       })
       ..on<LocalTrackOptionsUpdatedEvent>((event) {
         if (!mounted) return;
         // force recompute of mirror mode
         setState(() {});
       });
+    setState(() {
+      _renderer?.srcObject = widget.track.mediaStream;
+    });
   }
 
   @override
@@ -113,31 +107,24 @@ class _VideoTrackRendererState extends State<VideoTrackRenderer> {
   }
 
   @override
-  Widget build(BuildContext context) => FutureBuilder<rtc.RTCVideoRenderer>(
-        future: _rendererFuture,
-        builder: (context, snapshot) {
-          if (snapshot.hasData) {
-            return Builder(
-              key: _internalKey,
-              builder: (ctx) {
-                // let it render before notifying build
-                WidgetsBindingCompatible.instance
-                    ?.addPostFrameCallback((timeStamp) {
-                  widget.track.onVideoViewBuild?.call(_internalKey);
-                });
-                return rtc.RTCVideoView(
-                  snapshot.requireData,
-                  mirror: _shouldMirror(),
-                  filterQuality: FilterQuality.medium,
-                  objectFit: widget.fit,
-                );
-              },
+  Widget build(BuildContext context) => _renderer != null
+      ? Builder(
+          key: _internalKey,
+          builder: (ctx) {
+            // let it render before notifying build
+            WidgetsBindingCompatible.instance
+                ?.addPostFrameCallback((timeStamp) {
+              widget.track.onVideoViewBuild?.call(_internalKey);
+            });
+            return rtc.RTCVideoView(
+              _renderer!,
+              mirror: _shouldMirror(),
+              filterQuality: FilterQuality.medium,
+              objectFit: widget.fit,
             );
-          } else {
-            return Container();
-          }
-        },
-      );
+          },
+        )
+      : Container();
   bool _shouldMirror() {
     // off for screen share
     if (widget.track.source == TrackSource.screenShareVideo) return false;

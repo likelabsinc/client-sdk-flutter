@@ -35,6 +35,15 @@ class RemoteVideoTrack extends RemoteTrack with VideoTrack {
           receiver: receiver,
         );
 
+  @internal
+  static Future<RemoteVideoTrack> create(
+      TrackSource source, rtc.MediaStream stream, rtc.MediaStreamTrack track,
+      {rtc.RTCRtpReceiver? receiver}) async {
+    final t = RemoteVideoTrack(source, stream, track, receiver: receiver);
+    await t.initRenderer();
+    return t;
+  }
+
   VideoReceiverStats? prevStats;
   num? _currentBitrate;
   get currentBitrate => _currentBitrate;

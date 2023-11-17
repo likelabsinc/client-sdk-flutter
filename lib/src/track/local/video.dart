@@ -16,6 +16,7 @@ import 'package:flutter/foundation.dart';
 
 import 'package:collection/collection.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart' as rtc;
+import 'package:meta/meta.dart';
 
 import '../../events.dart';
 import '../../logger.dart';
@@ -162,6 +163,17 @@ class LocalVideoTrack extends LocalTrack with VideoTrack {
           track,
         );
 
+  @internal
+  static Future<LocalVideoTrack> create(
+      TrackSource source,
+      rtc.MediaStream stream,
+      rtc.MediaStreamTrack track,
+      VideoCaptureOptions currentOptions) async {
+    final t = LocalVideoTrack._(source, stream, track, currentOptions);
+    await t.initRenderer();
+    return t;
+  }
+
   /// Creates a LocalVideoTrack from camera input.
   static Future<LocalVideoTrack> createCameraTrack([
     CameraCaptureOptions? options,
@@ -169,7 +181,7 @@ class LocalVideoTrack extends LocalTrack with VideoTrack {
     options ??= const CameraCaptureOptions();
 
     final stream = await LocalTrack.createStream(options);
-    return LocalVideoTrack._(
+    return LocalVideoTrack.create(
       TrackSource.camera,
       stream,
       stream.getVideoTracks().first,
@@ -187,7 +199,7 @@ class LocalVideoTrack extends LocalTrack with VideoTrack {
     options ??= const ScreenShareCaptureOptions();
 
     final stream = await LocalTrack.createStream(options);
-    return LocalVideoTrack._(
+    return LocalVideoTrack.create(
       TrackSource.screenShareVideo,
       stream,
       stream.getVideoTracks().first,
@@ -211,7 +223,7 @@ class LocalVideoTrack extends LocalTrack with VideoTrack {
     final stream = await LocalTrack.createStream(options);
 
     List<LocalTrack> tracks = [
-      LocalVideoTrack._(
+      await LocalVideoTrack.create(
         TrackSource.screenShareVideo,
         stream,
         stream.getVideoTracks().first,
