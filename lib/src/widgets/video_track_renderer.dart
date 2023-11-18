@@ -19,6 +19,7 @@ import 'package:flutter_webrtc/flutter_webrtc.dart' as rtc;
 import '../events.dart';
 import '../extensions.dart';
 import '../internal/events.dart';
+import '../logger.dart';
 import '../managers/event.dart';
 import '../support/platform.dart';
 import '../track/local/local.dart';
@@ -55,6 +56,16 @@ class _VideoTrackRendererState extends State<VideoTrackRenderer> {
   // Used to compute visibility information
   late GlobalKey _internalKey;
 
+  void setSrcObject(rtc.MediaStream? stream) async {
+    var textureId = _renderer?.textureId;
+    try {
+      await _renderer?.setSrcObject(stream: stream);
+    } catch (e) {
+      logger
+          .warning('Got error setting setSrcObject[textureId:$textureId]: $e');
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -66,27 +77,23 @@ class _VideoTrackRendererState extends State<VideoTrackRenderer> {
   void dispose() {
     widget.track.removeViewKey(_internalKey);
     _listener?.dispose();
-    _renderer?.srcObject = null;
+    setSrcObject(null);
     super.dispose();
   }
 
   Future<void> _attach() async {
+    setSrcObject(widget.track.mediaStream);
     await _listener?.dispose();
     _listener = widget.track.createListener()
       ..on<TrackStreamUpdatedEvent>((event) {
         if (!mounted) return;
-        setState(() {
-          _renderer?.srcObject = event.stream;
-        });
+        setSrcObject(event.stream);
       })
       ..on<LocalTrackOptionsUpdatedEvent>((event) {
         if (!mounted) return;
         // force recompute of mirror mode
         setState(() {});
       });
-    setState(() {
-      _renderer?.srcObject = widget.track.mediaStream;
-    });
   }
 
   @override
@@ -102,7 +109,7 @@ class _VideoTrackRendererState extends State<VideoTrackRenderer> {
 
     if ([BrowserType.safari, BrowserType.firefox].contains(lkBrowser()) &&
         oldWidget.key != widget.key) {
-      _renderer?.srcObject = widget.track.mediaStream;
+      setSrcObject(widget.track.mediaStream);
     }
   }
 

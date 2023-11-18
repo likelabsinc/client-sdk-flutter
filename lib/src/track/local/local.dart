@@ -66,7 +66,9 @@ mixin VideoTrack on Track {
   @internal
   Future<void> closeRenderer() async {
     if (renderer == null) return;
+    var textureId = renderer!.textureId;
     await renderer!.dispose();
+    logger.fine('VideoTrack.closeRenderer($textureId)');
     renderer = null;
   }
 
