@@ -166,10 +166,9 @@ Future<NativeAudioConfiguration> defaultNativeAudioConfigurationFunc(
       appleAudioCategoryOptions: {
         AppleAudioCategoryOption.allowBluetooth,
         AppleAudioCategoryOption.mixWithOthers,
+        AppleAudioCategoryOption.defaultToSpeaker
       },
-      appleAudioMode: Hardware.instance.preferSpeakerOutput
-          ? AppleAudioMode.videoChat
-          : AppleAudioMode.voiceChat,
+      appleAudioMode: AppleAudioMode.default_,
     );
   }
 
