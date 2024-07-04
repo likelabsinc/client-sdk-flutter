@@ -155,7 +155,7 @@ Future<NativeAudioConfiguration> defaultNativeAudioConfigurationFunc(
       appleAudioCategoryOptions: {
         AppleAudioCategoryOption.mixWithOthers,
       },
-      appleAudioMode: AppleAudioMode.spokenAudio,
+      appleAudioMode: AppleAudioMode.default_,
     );
   } else if ([
     AudioTrackState.localOnly,
